@@ -6,7 +6,7 @@
 
 
 
-**Initial Questions**
+### Use SQL queries to find answers to the following questions.
 
 1. What range of years for baseball games played does the provided database cover? 
 
