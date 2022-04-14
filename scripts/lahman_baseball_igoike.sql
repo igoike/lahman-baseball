@@ -237,34 +237,35 @@ order by year;
 
 /*Find all players who hit their career highest number of home runs in 2016. Consider only players who have played in the league for at least 10 years, and who hit at least one home run in 2016. Report the players' first and last names and the number of home runs they hit in 2016. SHOULD HAVE 9 rows*/
 
-WITH hr_sixteen AS
-(SELECT playerid, yearid, SUM(hr) as player_hr_sixteen
-FROM batting
-WHERE yearid = 2016
-GROUP by playerid, yearid
-ORDER BY player_hr_sixteen DESC),
 
-yearly_hr AS
-(SELECT playerid, yearid, SUM(hr) AS hr_yearly,
- 	MAX(SUM(hr)) OVER(PARTITION BY playerid) AS best_year_hrs
-FROM batting
-GROUP BY playerid, yearid),
+with hr_by_year as
+(select playerid, yearid, SUM(hr) as hr_yearly,
+ 	MAX(SUM(hr)) OVER(PARTITION BY playerid) AS best_year_hr
+from batting
+group by playerid, yearid),
 
-yp AS
-(SELECT COUNT(DISTINCT yearid) AS years_played, playerid
-FROM batting
-GROUP BY playerid)
+ hr_2016 as
+(select playerid, yearid, SUM(hr) as player_hr_2016
+from batting
+where yearid = 2016
+group by playerid, yearid
+order by player_hr_2016 DESC),
 
-SELECT playerid, namefirst, namelast, hr_yearly AS total_hr_2016, years_played
-FROM yearly_hr
-INNER JOIN hr_sixteen
-USING(playerid)
-INNER JOIN yp
-USING(playerid)
-INNER JOIN people
-USING(playerid)
-WHERE best_year_hrs = player_hr_sixteen
-	AND hr_yearly > 0
-	AND yearly_hr.yearid = 2016
-	AND years_played >= 10
-ORDER BY playerid;
+years_played as
+(select COUNT(DISTINCT yearid) AS years_played, playerid
+from batting
+group by playerid)
+
+select playerid, namefirst, namelast, hr_yearly AS total_hr_2016, years_played
+from hr_by_year
+join hr_2016
+using(playerid)
+join years_played
+using(playerid)
+join people
+using(playerid)
+where best_year_hr = player_hr_2016
+	and hr_yearly > 0
+	and hr_by_year.yearid = 2016
+	and years_played >= 10
+order by playerid;
